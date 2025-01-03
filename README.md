@@ -1,71 +1,72 @@
-#Web Content Extraction API
+# **Web Content Extraction API**
 
-##Prerequisites
+## **Prerequisites**
+- Docker and Docker Compose
+- Kubernetes cluster (e.g., Minikube for local development)
+- Python 3.9+
+- `kubectl` CLI tool
+- `minikube` CLI tool
 
-Docker and Docker Compose
-Kubernetes cluster (Minikube for local development)
-Python 3.9+
-kubectl CLI tool
-minikube CLI tool
+## **Local Setup**
+   ```bash
+   git clone <your-repository>
+   cd <your-repository>
 
-###Local setup
-'''bash
-git clone <your-repository>
-cd <your-repository>
+   python -m venv venv
+   source venv/bin/activate
 
+   pip install -r requirements.txt
+   ```
+## **Running a Local Kubernetes Cluster with Minikube**
+   ```bash
+   minikube start
+   minikube addons enable metrics-server
+   minikube addons enable ingress
 
-python -m venv venv
-source venv/bin/activate
+   kubectl cluster-info
+   ```
+## **Building Docker Images**
+   ```bash
+   eval $(minikube docker-env)
 
-pip install -r requirements.txt
-'''
+   docker build -t web-content-extractor-api:latest ./api
+   docker build -t tensorlake/indexify:latest .
+   ```
 
-### local cluster using minikube
-'''bash
-minikube start
+## **Deploying Containers to Kubernetes**
+   ```bash
+   kubectl create configmap extractors-config --from-file=extractors/
 
-minikube addons enable metrics-server
-minikube addons enable ingress
+   kubectl apply -f kubernetes/deployment.yaml
 
-kubectl cluster-info
-'''
+   kubectl get pods
+   kubectl get services
+   ```
 
-### docker builds
-'''bash
-eval $(minikube docker-env)  # On Windows: minikube docker-env | Invoke-Expression
+## **Running Tests**
+1. Unit tests:
+   ```bash
+   pytest tests/test_api.py
+   ```
 
-docker build -t web-content-extractor-api:latest ./api
-docker build -t tensorlake/indexify:latest .
-'''
+2. Load tests:
+   ```bash
+   python -m tests.test_load
+   ```
 
-### container push/deploy onto kubernetes
-'''bash
-kubectl create configmap extractors-config --from-file=extractors/
-kubectl apply -f kubernetes/deployment.yaml
+3. Kubernetes tests:
+   ```bash
+   python -m tests.test_kubernetes
+   ```
 
-kubectl get pods
-kubectl get services
-'''
+## **Monitoring**
 
-### tests
-'''bash
-#ubit tests
-pytest tests/test_api.py
+- Metrics: [http://localhost:8000/metrics](http://localhost:8000/metrics)
+- Health Check: [http://localhost:8000/health](http://localhost:8000/health)
 
-#load tests
-python -m tests.test_load
-
-# kubernetes tests
-python -m tests.test_kubernetes
-'''
-
-### monitoring
-http://localhost:8000/metrics
-http://localhost:8000/health
-
-Can also use curl as for making requests 
-single -
-'''bash
+can use curl to make direct url requests also to check when buidign locally
+single-
+```bash
 curl -X POST http://localhost:8000/extract \
   -H "Content-Type: application/json" \
   -d '{
@@ -79,10 +80,10 @@ curl -X POST http://localhost:8000/extract \
       "required": ["title"]
     }
   }'
-'''
+```
 
-batch - 
-'''bash
+batch/multiple - 
+```bash
 curl -X POST http://localhost:8000/extract/batch \
   -H "Content-Type: application/json" \
   -d '{
@@ -96,4 +97,4 @@ curl -X POST http://localhost:8000/extract/batch \
       "required": ["title"]
     }
   }'
-'''
+```
