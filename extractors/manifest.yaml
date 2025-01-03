@@ -1,0 +1,23 @@
+apiVersion: indexify.ai/v1beta1
+kind: Extractor
+metadata:
+  name: web-content-extractor
+  labels:
+    type: web-scraper
+spec:
+  image: python:3.9-slim
+  source: .
+  class: WebContentExtractor
+  resources:
+    cpu: "1"
+    memory: "2Gi"
+  scale:
+    minReplicas: 1
+    maxReplicas: 5
+    metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: 70

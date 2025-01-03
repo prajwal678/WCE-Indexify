@@ -1,0 +1,24 @@
+services:
+  indexify:
+    image: tensorlake/indexify:latest
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./extractors:/extractors
+      - indexify-data:/var/lib/indexify
+    environment:
+      - INDEXIFY_HTTP_PORT=9000
+      - INDEXIFY_STORAGE_PATH=/var/lib/indexify
+      - INDEXIFY_LOG_LEVEL=debug
+
+    api:
+      build: ./api
+      ports:
+        - "8000:8000"
+      depends_on:
+        - indexify
+      environment:
+        - INDEXIFY_URL=http://indexify:9000
+
+volumes:
+  indexify-data:

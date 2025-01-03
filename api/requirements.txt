@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+httpx
+python-multipart
+pydantic
+slowapi
+prometheus-client

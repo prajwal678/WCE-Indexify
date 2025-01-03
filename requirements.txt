@@ -1,0 +1,15 @@
+indexify-extractor-sdk
+indexify
+httpx
+aiohttp
+python-multipart
+fastapi
+uvicorn
+httpx
+beautifulsoup4
+slowapi
+pydantic
+pytest
+pytest-asyncio
+kubernetes
+prometheus-client

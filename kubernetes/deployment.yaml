@@ -1,0 +1,134 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-content-extractor
+  labels:
+    app: web-content-extractor
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: web-content-extractor
+  template:
+    metadata:
+      labels:
+        app: web-content-extractor
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: web-content-extractor
+        image: tensorlake/indexify:latest
+        ports:
+        - containerPort: 9000
+          name: indexify
+        - containerPort: 8000
+          name: metrics
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 20
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        volumeMounts:
+        - name: extractors-volume
+          mountPath: /extractors
+      volumes:
+      - name: extractors-volume
+        configMap:
+          name: extractors-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-content-extractor
+  labels:
+    app: web-content-extractor
+spec:
+  selector:
+    app: web-content-extractor
+  ports:
+  - port: 9000
+    name: indexify
+    targetPort: indexify
+  - port: 8000
+    name: metrics
+    targetPort: metrics
+  type: LoadBalancer
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: web-content-extractor
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: web-content-extractor
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 120
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: web-content-extractor-pdb
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: web-content-extractor
