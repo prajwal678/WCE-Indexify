@@ -9,8 +9,8 @@
 
 ## **Local Setup**
    ```bash
-   git clone <your-repository>
-   cd <your-repository>
+   git clone https://github.com/prajwal678/WCE-Indexify.git  
+   cd WCE-Indexify
 
    python -m venv venv
    source venv/bin/activate
